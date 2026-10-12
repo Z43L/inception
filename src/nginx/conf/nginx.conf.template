@@ -1,0 +1,64 @@
+# NGINX config template. ${DOMAIN_NAME} is rendered by the entrypoint
+# with envsubst (nginx itself does not expand environment variables).
+worker_processes 1;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+
+    access_log  /var/log/nginx/access.log;
+    error_log   /var/log/nginx/error.log;
+
+    # Hide version banner.
+    server_tokens off;
+
+    upstream php {
+        server wordpress:9000;
+    }
+
+    server {
+        listen 443 ssl;
+        server_name ${DOMAIN_NAME};
+
+        # TLS 1.2 / 1.3 only, as required by the subject.
+        ssl_certificate     /etc/nginx/ssl/inception.crt;
+        ssl_certificate_key /etc/nginx/ssl/inception.key;
+        ssl_protocols       TLSv1.2 TLSv1.3;
+        ssl_prefer_server_ciphers on;
+        ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384;
+        ssl_session_cache   shared:SSL:10m;
+        ssl_session_timeout 10m;
+
+        # Security headers.
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header X-Content-Type-Options "nosniff" always;
+
+        root  /var/www/html;
+        index index.php;
+
+        location / {
+            try_files $uri $uri/ /index.php?$args;
+        }
+
+        # PHP is executed by the wordpress container (php-fpm on :9000).
+        # This container holds NO php and NO wordpress code.
+        location ~ \.php$ {
+            include        fastcgi_params;
+            fastcgi_pass   php;
+            fastcgi_index  index.php;
+            fastcgi_param  SCRIPT_FILENAME /var/www/html$fastcgi_script_name;
+        }
+
+        # Block access to sensitive files.
+        location ~ /\.ht {
+            deny all;
+        }
+        location = /xmlrpc.php {
+            deny all;
+        }
+    }
+}

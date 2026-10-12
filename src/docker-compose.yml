@@ -1,0 +1,81 @@
+
+services:
+  mariadb:
+    build: ./mariadb
+    image: mariadb
+    container_name: mariadb
+    restart: unless-stopped
+    env_file:
+      - .env
+    secrets:
+      - db_root_password
+      - db_password
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - inception
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$(cat /run/secrets/db_root_password)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  wordpress:
+    build: ./wordpress
+    image: wordpress
+    container_name: wordpress
+    restart: unless-stopped
+    env_file:
+      - .env
+    secrets:
+      - db_password
+      - credentials
+    volumes:
+      - wp_data:/var/www/html
+    networks:
+      - inception
+    depends_on:
+      mariadb:
+        condition: service_healthy
+
+  nginx:
+    build: ./nginx
+    image: nginx
+    container_name: nginx
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "443:443" # the ONLY entrypoint into the stack
+    networks:
+      - inception
+    depends_on:
+      wordpress:
+        condition: service_started
+networks:
+  inception:
+    name: inception
+    driver: bridge
+
+volumes:
+  db_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/${LOGIN}/data/mariadb
+  wp_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/${LOGIN}/data/wordpress
+
+secrets:
+  db_root_password:
+    file: ../secrets/db_root_password.txt
+  db_password:
+    file: ../secrets/db_password.txt
+  credentials:
+    file: ../secrets/credentials.txt
