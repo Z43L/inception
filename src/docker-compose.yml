@@ -48,6 +48,9 @@ services:
       - .env
     ports:
       - "443:443" # the ONLY entrypoint into the stack
+    volumes:
+    - wp_data:/var/www/html:ro
+
     networks:
       - inception
     depends_on:
@@ -64,13 +67,13 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: /home/${LOGIN}/data/mariadb
+      device: /home/davmoren/data/mariadb
   wp_data:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /home/${LOGIN}/data/wordpress
+      device: /home/davmoren/data/wordpress
 
 secrets:
   db_root_password:

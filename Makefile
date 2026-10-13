@@ -1,7 +1,7 @@
 LOGIN    ?= $(shell grep '^LOGIN=' src/.env 2>/dev/null | cut -d= -f2)
 DOMAIN   ?= $(shell grep '^DOMAIN_NAME=' src/.env 2>/dev/null | cut -d= -f2)
-DATA_DIR := /home/$(LOGIN)/data
-COMPOSE  := docker compose -f src/docker-compose.yml --env-file srcs/requirements/.env
+DATA_DIR := /home/davmoren/data
+COMPOSE  := docker compose -f src/docker-compose.yml --env-file src/.env
 
 .PHONY: all build up down start stop restart logs ps status clean fclean re secrets domain help
 
@@ -13,7 +13,7 @@ build: secrets $(DATA_DIR)/mariadb $(DATA_DIR)/wordpress
 
 # Start the whole stack detached.
 up:
-	$(COMPOSE) up -d
+	$(COMPOSE) up 
 	@echo ""
 	@echo "  WordPress : https://$(DOMAIN)"
 
@@ -54,17 +54,17 @@ $(DATA_DIR)/mariadb $(DATA_DIR)/wordpress:
 # Generate the Docker secrets (passwords) once; never overwrites existing.
 secrets:
 	@mkdir -p secrets
-	@for f in db_root_password db_password ftp_password; do \
+	@for f in db_root_password db_password; do \
 		if [ ! -f secrets/$$f.txt ]; then \
 			openssl rand -hex 16 > secrets/$$f.txt; \
 			echo "generated secrets/$$f.txt"; \
 		fi; \
 	done
 	@if [ ! -f secrets/credentials.txt ]; then \
-		ADMIN_USER=$$(grep '^WP_ADMIN_USER=' srcs/requirements/.env | cut -d= -f2); \
+		ADMIN_USER=$$(grep '^WP_ADMIN_USER=' src/.env | cut -d= -f2); \
 		printf "%s:%s\n%s:%s\n" \
 			"$$ADMIN_USER" "$$(openssl rand -hex 12)" \
-			"$$(grep '^WP_USER=' srcs/requirements/.env | cut -d= -f2)" "$$(openssl rand -hex 12)" \
+			"$$(grep '^WP_USER=' src/.env | cut -d= -f2)" "$$(openssl rand -hex 12)" \
 			> secrets/credentials.txt; \
 		echo "generated secrets/credentials.txt"; \
 	fi

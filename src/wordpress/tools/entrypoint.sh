@@ -12,10 +12,10 @@ DB_PW="$(cat /run/secrets/db_password)"
 # secrets/credentials.txt format (see secrets/README.md):
 #   line 1 -> "<admin_user>:<admin_password>"   (no "admin" in the name!)
 #   line 2 -> "<second_user>:<second_password>"
-ADMIN_USER="$(sed -n '1p' /run/secrets/credentials.txt | cut -d: -f1)"
-ADMIN_PW="$(sed -n '1p' /run/secrets/credentials.txt | cut -d: -f2-)"
-EXTRA_USER="$(sed -n '2p' /run/secrets/credentials.txt | cut -d: -f1)"
-EXTRA_PW="$(sed -n '2p' /run/secrets/credentials.txt | cut -d: -f2-)"
+ADMIN_USER="$(sed -n '1p' /run/secrets/credentials | cut -d: -f1)"
+ADMIN_PW="$(sed -n '1p' /run/secrets/credentials | cut -d: -f2-)"
+EXTRA_USER="$(sed -n '2p' /run/secrets/credentials | cut -d: -f1)"
+EXTRA_PW="$(sed -n '2p' /run/secrets/credentials | cut -d: -f2-)"
 
 echo "[wordpress] waiting for MariaDB..."
 for _ in $(seq 1 60); do

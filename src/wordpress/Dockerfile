@@ -21,10 +21,10 @@ RUN curl -fsSL -o /usr/local/bin/wp \
         https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar \
     && chmod +x /usr/local/bin/wp
 
-# WordPress core baked into the image (copied to the volume on first boot).
+# Download WordPress core
 RUN mkdir -p /usr/src/wordpress \
     && curl -fsSL -o /tmp/wp.tar.gz https://wordpress.org/latest.tar.gz \
-    && tar -xzf /tmp/wp.tar.gz -C /usr/src --strip-components=1 \
+    && tar -xzf /tmp/wp.tar.gz -C /usr/src/wordpress --strip-components=1 \
     && rm /tmp/wp.tar.gz \
     && chown -R www-data:www-data /usr/src/wordpress
 
